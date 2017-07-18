@@ -12,7 +12,6 @@ This isn't really meant to be a stand-alone tool, just an interface for web base
 
 Try to load the webpage by going to [http://127.0.0.1:8080](http://127.0.0.1:8080)
 
-Examples: 
 * 127.0.0.1:8080/shutdown?60&Server will shutdown in 60 seconds
 * 127.0.0.1:8080/getAllPlayers
 * 127.0.0.1:8080/addMoneyToBank?Admin&1234567890&10000 
