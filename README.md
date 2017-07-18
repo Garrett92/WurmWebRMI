@@ -15,7 +15,7 @@ Try to load the webpage by going to [http://127.0.0.1:8080](http://127.0.0.1:808
 Examples: 
 * 127.0.0.1:8080/shutdown?60&Server will shutdown in 60 seconds
 * 127.0.0.1:8080/getAllPlayers
-* 127.0.0.1:8080/addMoneyToBank?Admin&1234567890&10000
+* 127.0.0.1:8080/addMoneyToBank?Admin&1234567890&10000 
 
 **Commands:**
 
