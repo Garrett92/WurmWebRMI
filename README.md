@@ -28,17 +28,23 @@ cancelShutdown
 isRunning
 	Returns 'true' if running
 	
+getServerStatus
+	Returns status of server - (If it is being shutdown or running)
 getWurmTime
 	Returns current time in wurm (as if you ran the /time command in-game)
 getUpTime
 	Returns the amount of time the server has been online in days, hours, and minutes
 getAllServers
-	Returns list of servers linked together?
+	Returns list of servers?
+getAllServerInternalAddresses
+	Returns list of servers?
 	
 getPlayerCount
-	Returns the amount of players currently online.
+	Returns the amount of players currently online
 getAllPlayers
 	Returns list of all characters registered on the server in the format NAME=PLAYERID
+getPlayerStates?[playerID]
+	Returns array of bytes of player states (unknown)
 getPlayerIpAddresses
 	Returns list of all players currently online along with their IP
 doesPlayerExist?[playerName]
@@ -53,6 +59,8 @@ getPlayersForKingdom?[KingdomID]
 	Returns list of players online in the specified kingdom
 getAreaHistory?[Amount]
 	Returns list of all history for the server limited by the amount specified
+getKingdoms
+	Returns list of kingdoms/IDs on the server
 	
 getTileSummary?[TileX]&[TileY]&[Boolean surfaceTile]
 	Returns information about the tile (surfaceTile argument must be 'true' or 'false')

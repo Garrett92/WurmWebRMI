@@ -12,6 +12,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -21,6 +22,7 @@ import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
 
 import com.wurmonline.server.webinterface.WebInterface;
+import com.wurmonline.shared.exceptions.WurmServerException;
 
 public final class WebRMI {
 
@@ -56,6 +58,23 @@ public final class WebRMI {
 
 	private static String processCommand(String cmd, String[] args) throws RemoteException, NotBoundException, UnsupportedEncodingException {
 		switch (cmd.toLowerCase()) {
+		case "getplayerstates":
+			long[] ret = new long[args.length];
+			for (int i=0; i<(args.length); i++) {
+				ret[i] = safeLong(args[i]);
+			}
+			try {
+				return buildReturnSpecial(iface.getPlayerStates(pass, ret));
+			} catch (WurmServerException e) {
+				e.printStackTrace();
+			}
+			return "";
+		case "getallserverinternaladdresses":
+			return buildReturn(iface.getAllServerInternalAddresses(pass));
+		case "getserverstatus":
+			return iface.getServerStatus(pass);
+		case "getkingdoms":
+			return buildReturn(iface.getKingdoms(pass));
 		case "getallplayers": // getallplayers
 			return buildReturn(getAllPlayers(iface.getBattleRanks(pass, 999999)));
 		case "getbattleranks": // getbattleranks?5 --args (int)limit)
@@ -147,6 +166,12 @@ public final class WebRMI {
 			}
 		});
 		return toReturn;
+	}
+	
+	private static String buildReturnSpecial(Map<?, byte[]> map) {
+		StringBuilder stringBuilder = new StringBuilder();
+		map.forEach((k,v)->stringBuilder.append(k + "=" + Arrays.toString(v) + "<br>"));
+		return stringBuilder.toString();
 	}
 
 	private static String buildReturn(Map<?, ?> map) {
