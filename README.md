@@ -41,6 +41,8 @@ getAllServerInternalAddresses
 	
 getPlayerCount
 	Returns the amount of players currently online
+getOnlinePlayers
+	Returns list of all connected players in the format ID=[NAME,X-COORD,Y-COORD]
 getAllPlayers
 	Returns list of all characters registered on the server in the format NAME=PLAYERID
 getPlayerStates?[playerID]
@@ -105,6 +107,8 @@ chargeMoney?[playerName]&[amount in iron]
 ```
 
 ## Extra Info
+It is not recommended to open your RMI ports to the outside of your local network. This tool is developed to be ran within the same local network as your Wurm Unlimited server.
+
 If the Wurm Unlimited server is running on a remote server, you will need to edit the LaunchConfig.ini file located in your Wurm Unlimited server folder. Add the following code to the end of the file and change the IP address to the external IP (if the remote server is external) or the LAN IP (if the server is local).
 
 ```

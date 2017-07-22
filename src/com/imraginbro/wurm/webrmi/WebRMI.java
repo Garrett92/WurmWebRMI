@@ -12,9 +12,11 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -31,8 +33,9 @@ public final class WebRMI {
 	static int webport = 8080;
 	static int rmiport = 7220;
 	static String pass = "";
+	static final String newLine = System.lineSeparator();
 
-	private static final int fNumberOfThreads = 5;
+	private static final int fNumberOfThreads = 100;
 	private static final Executor fThreadPool = Executors.newFixedThreadPool(fNumberOfThreads);
 
 	public static void main(String[] args) throws IOException
@@ -56,81 +59,78 @@ public final class WebRMI {
 		}
 	}
 
-	private static String processCommand(String cmd, String[] args) throws RemoteException, NotBoundException, UnsupportedEncodingException {
+	private static String processCommand(String cmd, String[] args) throws RemoteException, NotBoundException, UnsupportedEncodingException, WurmServerException {
 		switch (cmd.toLowerCase()) {
-		case "getplayerstates":
+		case "getonlineplayers": //getOnlinePlayers?true --args (boolean)moreInfo
+			return buildOutput(getOnlinePlayers());
+		case "getplayerstates": //getPlayerStates?01234567890&01234567890&01234567890.... (long)playerID
 			long[] ret = new long[args.length];
 			for (int i=0; i<(args.length); i++) {
 				ret[i] = safeLong(args[i]);
 			}
-			try {
-				return buildReturnSpecial(iface.getPlayerStates(pass, ret));
-			} catch (WurmServerException e) {
-				e.printStackTrace();
-			}
-			return "";
+			return buildOutput(iface.getPlayerStates(pass, ret));
 		case "getallserverinternaladdresses":
-			return buildReturn(iface.getAllServerInternalAddresses(pass));
+			return buildOutput(iface.getAllServerInternalAddresses(pass));
 		case "getserverstatus":
 			return iface.getServerStatus(pass);
 		case "getkingdoms":
-			return buildReturn(iface.getKingdoms(pass));
+			return buildOutput(iface.getKingdoms(pass));
 		case "getallplayers": // getallplayers
-			return buildReturn(getAllPlayers(iface.getBattleRanks(pass, 999999)));
+			return buildOutput(getAllPlayers());
 		case "getbattleranks": // getbattleranks?5 --args (int)limit)
-			return buildReturn(iface.getBattleRanks(pass, safeInt(args[0])));
+			return buildOutput(iface.getBattleRanks(pass, safeInt(args[0])));
 		case "getplayersforkingdom": // getplayersforkingdom?4 --args (int)kingdomID
-			return buildReturn(iface.getPlayersForKingdom(pass, safeInt(args[0])));
+			return buildOutput(iface.getPlayersForKingdom(pass, safeInt(args[0])));
 		case "chargemoney": // chargemoney?Admin&500 --args (str)playerName,(int)amountInIron
 			return ""+iface.chargeMoney(pass, args[0], safeLong(args[1]));
 		case "addmoneytobank": // addmoneytobank?Admin&-1&500 --args (str)playerName,(int)playerID,(int)amountInIron ---- note: use -1 playerID if searching by name
-			return buildReturn(iface.addMoneyToBank(pass, args[0], safeLong(args[1]), safeLong(args[2]), "[WurmWebRMI]", true));
+			return buildOutput(iface.addMoneyToBank(pass, args[0], safeLong(args[1]), safeLong(args[2]), "[WurmWebRMI]", true));
 		case "getstructuresummary": // getstructuresummary?1234567890 --args (int)structureID
-			return buildReturn(iface.getStructureSummary(pass, safeLong(args[0])));
+			return buildOutput(iface.getStructureSummary(pass, safeLong(args[0])));
 		case "gettilesummary": // gettilesummary?1000&1500&true --args (int)tileX,(int)tileY,(boolean)surfaceTile
-			return buildReturn(iface.getTileSummary(pass, safeInt(args[0]), safeInt(args[1]), Boolean.valueOf(args[2])));
+			return buildOutput(iface.getTileSummary(pass, safeInt(args[0]), safeInt(args[1]), Boolean.valueOf(args[2])));
 		case "getitemsummary": // getitemsummary?1234567890 --args (int)itemID
-			return buildReturn(iface.getItemSummary(pass, safeLong(args[0])));
+			return buildOutput(iface.getItemSummary(pass, safeLong(args[0])));
 		case "getplayersummary": // getplayersummary?1234567890 --args (int)playerID
-			return buildReturn(iface.getPlayerSummary(pass, safeLong(args[0])));
+			return buildOutput(iface.getPlayerSummary(pass, safeLong(args[0])));
 		case "getfriends": // getfriends?1234567890 --args (int)playerID
-			return buildReturn(iface.getFriends(pass, safeLong(args[0])));
+			return buildOutput(iface.getFriends(pass, safeLong(args[0])));
 		case "getinventory": // getinventory?1234567890 --args (int)playerID
-			return buildReturn(iface.getInventory(pass, safeLong(args[0])));
+			return buildOutput(iface.getInventory(pass, safeLong(args[0])));
 		case "getpower": // getpower?1234567890 --args (int)playerID
 			return ""+iface.getPower(pass, safeLong(args[0]));
 		case "getmoney": // getmoney?1234567890&Admin --args (int)playerID,(str)playerName
 			return ""+iface.getMoney(pass, safeLong(args[0]), args[1]);
 		case "getbankaccount": // getbankaccount?1234567890 --args (int)playerID
-			return buildReturn(iface.getBankAccount(pass, safeLong(args[0])));
+			return buildOutput(iface.getBankAccount(pass, safeLong(args[0])));
 		case "getareahistory": // getareahistory?5 --args (int)limit)
-			return ""+String.join("<br>",(iface.getAreaHistory(pass, safeInt(args[0]))));
+			return ""+String.join(newLine,(iface.getAreaHistory(pass, safeInt(args[0]))));
 		case "getplayeripaddresses": // getplayeripaddresses
-			return buildReturn(iface.getPlayerIPAddresses(pass));
+			return buildOutput(iface.getPlayerIPAddresses(pass));
 		case "getalliesfordeed": // getalliesfordeed?1 --args (int)villageID
-			return buildReturn(iface.getAlliesForDeed(pass, safeInt(args[0])));
+			return buildOutput(iface.getAlliesForDeed(pass, safeInt(args[0])));
 		case "gethistoryfordeed": // gethistoryfordeed?1&5 --args (int)villageID,(int)limit
-			return ""+String.join("<br>",(iface.getHistoryForDeed(pass, safeInt(args[0]), safeInt(args[1]))));
+			return ""+String.join(newLine,(iface.getHistoryForDeed(pass, safeInt(args[0]), safeInt(args[1]))));
 		case "getplayersfordeed": // getplayersfordeed?1 --args (int)villageID
-			return buildReturn(iface.getPlayersForDeed(pass, safeInt(args[0])));
+			return buildOutput(iface.getPlayersForDeed(pass, safeInt(args[0])));
 		case "getdeedsummary": // getdeedsummary?1 --args (int)villageID
-			return buildReturn(iface.getDeedSummary(pass, safeInt(args[0])));
+			return buildOutput(iface.getDeedSummary(pass, safeInt(args[0])));
 		case "getbodyitems": // getbodyitems?1234567890 --args (int)playerID
-			return buildReturn(iface.getBodyItems(pass, safeLong(args[0])));
+			return buildOutput(iface.getBodyItems(pass, safeLong(args[0])));
 		case "getdeeds": // getdeeds
-			return buildReturn(iface.getDeeds(pass));
+			return buildOutput(iface.getDeeds(pass));
 		case "getplayerid": // getplayerid?Admin --args (str)playerName
 			return ""+iface.getPlayerId(pass, args[0]);
 		case "doesplayerexist": // doesplayerexist?Admin --args (str)playerName
-			return buildReturn(iface.doesPlayerExist(pass, args[0]));
+			return buildOutput(iface.doesPlayerExist(pass, args[0]));
 		case "getskills": // getskills
-			return buildReturn(iface.getSkills(pass));
+			return buildOutput(iface.getSkills(pass));
 		case "getskillsforplayer": // getskillsforplayer?1234567890 --args (int)playerID
-			return buildReturn(iface.getSkills(pass, safeLong(args[0])));
+			return buildOutput(iface.getSkills(pass, safeLong(args[0])));
 		case "getskillstats": // getskillstats?1008 --args (int)skillID
-			return buildReturn(iface.getSkillStats(pass, safeInt(args[0])));
+			return buildOutput(iface.getSkillStats(pass, safeInt(args[0])));
 		case "getallservers": // getallservers
-			return buildReturn(iface.getAllServers(pass));
+			return buildOutput(iface.getAllServers(pass));
 		case "getwurmtime": // getwurmtime
 			return ""+iface.getWurmTime(pass);
 		case "getuptime": // getuptime
@@ -155,8 +155,36 @@ public final class WebRMI {
 			return "[ERROR] Unknown command: " + cmd;
 		}
 	}
+	
+	private static Map<Long, String[]> getOnlinePlayers() throws RemoteException, NotBoundException, WurmServerException {
+		Map<String, Long> allPlayers = getAllPlayers();
+		Map<Long, String[]> toReturn = new HashMap<Long, String[]>();
+		List<Long> playerIDs = new ArrayList<Long>();
+		for(Map.Entry<String, Long> player : allPlayers.entrySet()) {
+			playerIDs.add(player.getValue());
+		}
+		long[] arrayID = playerIDs.stream().mapToLong(l -> l).toArray();
+		Map<Long, byte[]> states = iface.getPlayerStates(pass, arrayID);
+		for(Entry<Long, byte[]> playerStates : states.entrySet()) {
+			byte lastValue = playerStates.getValue()[playerStates.getValue().length-1];
+			if (lastValue > 0) {
+				Map<String, ?> playerSummary = iface.getPlayerSummary(pass, playerStates.getKey());
+				if (playerSummary.containsKey("Coord x")) {
+					ArrayList<String> finalPlayers = new ArrayList<String>();
+					finalPlayers.add((String) playerSummary.get("Name"));
+					finalPlayers.add(Integer.toString((int) playerSummary.get("Coord x")));
+					finalPlayers.add(Integer.toString((int) playerSummary.get("Coord y")));
+					String[] ready = new String[finalPlayers.size()];
+					ready = finalPlayers.toArray(ready);
+					toReturn.put(playerStates.getKey(), ready);
+				}
+			}
+		}
+		return toReturn;
+	}
 
-	private static Map<String, Long> getAllPlayers(Map<String, Integer> map) throws RemoteException, NotBoundException {
+	private static Map<String, Long> getAllPlayers() throws RemoteException, NotBoundException {
+		Map<String, Integer> map = iface.getBattleRanks(pass, 999999);
 		Map<String, Long> toReturn = new HashMap<String, Long>();
 		map.forEach((k,v)->{
 			try {
@@ -167,17 +195,58 @@ public final class WebRMI {
 		});
 		return toReturn;
 	}
+
+	private static String arrayToString(byte[] v, String delimiter) {
+		StringBuilder string = new StringBuilder();
+		string.append("[");
+		for (int i = 0; i < v.length; i++) {
+			if (i > 0) {
+				string.append(delimiter);
+			}
+			byte item = v[i];
+			string.append(item);
+		}
+		string.append("]");
+		return string.toString();
+	}
 	
-	private static String buildReturnSpecial(Map<?, byte[]> map) {
-		StringBuilder stringBuilder = new StringBuilder();
-		map.forEach((k,v)->stringBuilder.append(k + "=" + Arrays.toString(v) + "<br>"));
-		return stringBuilder.toString();
+	private static String arrayToString(String[] v, String delimiter) {
+		StringBuilder string = new StringBuilder();
+		string.append("[");
+		for (int i = 0; i < v.length; i++) {
+			if (i > 0) {
+				string.append(delimiter);
+			}
+			String item = v[i];
+			string.append(item);
+		}
+		string.append("]");
+		return string.toString();
 	}
 
-	private static String buildReturn(Map<?, ?> map) {
-		StringBuilder stringBuilder = new StringBuilder();
-		map.forEach((k,v)->stringBuilder.append(k + "=" + v + "<br>"));
-		return stringBuilder.toString();
+	private static String buildOutput(Map<?, ?> map) {
+		try {
+			StringBuilder string = new StringBuilder();
+			int mapSize = map.size();
+			int c = 0;
+			for(Map.Entry<?, ?> entry : map.entrySet()) {
+				c++;
+				Object k = entry.getKey();
+				Object v = entry.getValue();
+				if (v instanceof byte[])
+					string.append(k + "=" + arrayToString((byte[]) v, ","));
+				else if (v instanceof String[])
+					string.append(k + "=" + arrayToString((String[]) v, ","));
+				else
+					string.append(k + "=" + v);
+				if (c < mapSize)
+					string.append(newLine);
+			}
+			return string.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ("[ERROR] " + e.getMessage());
+		}
 	}
 
 	private static WebInterface setupConnection(String host, int port) throws RemoteException, NotBoundException {
@@ -261,8 +330,8 @@ public final class WebRMI {
 				if (!request.contains("reloadsettings"))
 					iface = setupConnection(addr, rmiport); 
 				response = processCommand(request, commands);
-			} catch (RemoteException | NotBoundException | UnsupportedEncodingException e) {
-				response = "[ERROR]" + e.toString();
+			} catch (RemoteException | NotBoundException | UnsupportedEncodingException | WurmServerException e) {
+				response = "[ERROR] " + e.toString();
 			}
 			out = new PrintWriter(s.getOutputStream(), true);
 			out.println("HTTP/1.0 200");
