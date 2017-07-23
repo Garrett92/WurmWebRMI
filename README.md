@@ -63,6 +63,8 @@ getAreaHistory?[Amount]
 	Returns list of all history for the server limited by the amount specified
 getKingdoms
 	Returns list of kingdoms/IDs on the server
+getKingdomInfluence
+	Returns information about kingdom influence
 	
 getTileSummary?[TileX]&[TileY]&[Boolean surfaceTile]
 	Returns information about the tile (surfaceTile argument must be 'true' or 'false')
@@ -113,7 +115,15 @@ genPassword?[playerName]&[steamID64]
 	Returns the encrypted password so you can match it with the database
 checkUserPass?[playerName]&[steamID64]
 	Returns some information the player if the name/password is valid
-
+	
+createPlayer?[playerName]&[steamID64]&[kingdomID]&[gender]&[power]
+	Creates a player on the Wurm Unlimited server
+renameCharacter?[oldName]&[newName]&[steamID64]
+	Renames the player
+changePassword?[playerName]&[steamID64]
+	Changes the players password
+changeEmail?[playerName]&[oldEmail]&[newEmail]
+	Changes the email assigned to the player account
 ```
 
 ## Extra Info

@@ -73,11 +73,21 @@ public final class WebRMI {
 
 	private static String processCommand(String cmd, String[] args) throws Exception {
 		switch (cmd.toLowerCase()) {
-		case "findsteamidpower": //findSteamidpower
+		case "changepassword":
+			return changePassword(args[0], args[1]);
+		case "changeemail": //changeEmail?playerName&oldemail&newemail
+			return changeEmail(args[0], args[1], args[2]);
+		case "renamecharacter": //renameCharacter?oldname&newname&steamID64
+			return renameChracter(args[0], args[1], args[2]);
+		case "getkingdominfluence":
+			return buildOutput(iface.getKingdomInfluence(pass));
+		case "createplayer": //createPlayer?name&steamID64&(int)kingdomID&(int)gender&(int)power
+			return createPlayer(args[0], args[1], Byte.valueOf(args[2]), Byte.valueOf(args[3]), Byte.valueOf(args[4]));
+		case "findsteamidpower": //findSteamidpower?steamid64
 			return getHighestPowerForSteamID(args[0]);
-		case "checkuserpass":
+		case "checkuserpass": //checkuserpass?name&steamid64
 			return buildOutput(checkUserPass(args[0], args[1]));
-		case "findplayerswithsteamid":
+		case "findplayerswithsteamid": //findplayerswithsteamid?steamid64
 			return buildOutput(findPlayersWithSteamID(args[0]));
 		case "genpassword": //genPassword?playerName&steamid64 --args (string)playerName, (string)steamID64  ---- can verify DB password match
 			return passwordEncrypt(args[0], args[1]);
@@ -173,6 +183,38 @@ public final class WebRMI {
 			return "reloaded settings (changes to web port require full restart)";
 		default:
 			return "[ERROR] Unknown command: " + cmd;
+		}
+	}
+
+	private static String changePassword(String playerName, String steamID) throws RemoteException {
+		return buildOutput(iface.changePassword(pass, raiseFirstLetter(playerName), raiseFirstLetter(playerName)+"@test.com", steamID));
+	}
+
+	public static final String raiseFirstLetter(String oldString)
+	{
+		if (oldString.length() == 0) {
+			return oldString;
+		}
+		String lOldString = oldString.toLowerCase();
+		String firstLetter = lOldString.substring(0, 1).toUpperCase();
+		String newString = firstLetter + lOldString.substring(1, lOldString.length());
+		return newString;
+	}
+	
+	private static String changeEmail(String name, String oldEmail, String newEmail) throws RemoteException {
+		return buildOutput(iface.changeEmail(pass, name, oldEmail, newEmail));
+	}
+
+	private static String renameChracter(String oldname, String newname, String steamID) throws RemoteException {
+		changeEmail(raiseFirstLetter(oldname), raiseFirstLetter(oldname)+"@test.com", raiseFirstLetter(newname)+"@test.com");
+		return iface.rename(pass, raiseFirstLetter(oldname), raiseFirstLetter(newname), steamID, 5);
+	}
+
+	private static String createPlayer(String playerName, String steamID, byte kingdomID, byte gender, byte power) {
+		try {
+			return buildOutput(iface.createPlayer(pass, raiseFirstLetter(playerName), steamID, "What is your mother's maiden name?", "Sawyer", playerName+"@test.com", kingdomID, power, 8263186381637L, gender));
+		} catch (RemoteException e) {
+			return e.getMessage();
 		}
 	}
 
