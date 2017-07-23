@@ -45,7 +45,7 @@ getOnlinePlayers
 	Returns list of all connected players in the format ID=[NAME,X-COORD,Y-COORD]
 getAllPlayers
 	Returns list of all characters registered on the server in the format NAME=PLAYERID
-getPlayerStates?[playerID]
+getPlayerStates?[playerID]&[playerID]&...
 	Returns array of bytes of player states (unknown)
 getPlayerIpAddresses
 	Returns list of all players currently online along with their IP
@@ -104,6 +104,16 @@ addMoneyToBank?[playerName]&[playerID]&[amount in iron]
 	Adds money to players bank and returns total updated amount in iron
 chargeMoney?[playerName]&[amount in iron]
 	Removed money from players bank and returns total updated amount in iron
+	
+findPlayersWithSteamID?[steamID64]
+	Matches any players with the supplied steamID returns (PLAYERID=[PLAYERNAME,POWER])
+findSteamIDPower?[steamID64]
+	Returns the integer value of the highest power player from the findPlayersWithSteamID list
+genPassword?[playerName]&[steamID64]
+	Returns the encrypted password so you can match it with the database
+checkUserPass?[playerName]&[steamID64]
+	Returns some information the player if the name/password is valid
+
 ```
 
 ## Extra Info

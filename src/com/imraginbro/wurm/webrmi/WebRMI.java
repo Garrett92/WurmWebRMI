@@ -6,19 +6,27 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
@@ -52,15 +60,27 @@ public final class WebRMI {
 				@Override
 				public void run()
 				{
-					HandleRequest(connection);
+					try {
+						HandleRequest(connection);
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
 				}
 			};
 			fThreadPool.execute(task);
 		}
 	}
 
-	private static String processCommand(String cmd, String[] args) throws RemoteException, NotBoundException, UnsupportedEncodingException, WurmServerException {
+	private static String processCommand(String cmd, String[] args) throws Exception {
 		switch (cmd.toLowerCase()) {
+		case "findsteamidpower": //findSteamidpower
+			return getHighestPowerForSteamID(args[0]);
+		case "checkuserpass":
+			return buildOutput(checkUserPass(args[0], args[1]));
+		case "findplayerswithsteamid":
+			return buildOutput(findPlayersWithSteamID(args[0]));
+		case "genpassword": //genPassword?playerName&steamid64 --args (string)playerName, (string)steamID64  ---- can verify DB password match
+			return passwordEncrypt(args[0], args[1]);
 		case "getonlineplayers": //getOnlinePlayers?true --args (boolean)moreInfo
 			return buildOutput(getOnlinePlayers());
 		case "getplayerstates": //getPlayerStates?01234567890&01234567890&01234567890.... (long)playerID
@@ -155,7 +175,82 @@ public final class WebRMI {
 			return "[ERROR] Unknown command: " + cmd;
 		}
 	}
-	
+
+	private static String getHighestPowerForSteamID(String steamID) throws Exception {
+		Map<Long, String[]> players = findPlayersWithSteamID(steamID);
+		int powerReturn = 0;
+		for(Entry<Long, String[]> player : players.entrySet()) {
+			if (Integer.parseInt(player.getValue()[1]) > powerReturn) {
+				powerReturn = Integer.parseInt(player.getValue()[1]);
+			}
+		}
+		return Integer.toString(powerReturn);
+	}
+
+	private static Map<Long, String[]> findPlayersWithSteamID(String steamID) throws Exception {
+		Map<String, Long> allPlayers = getAllPlayers();
+		Map<Long, String[]> toReturn = new HashMap<Long, String[]>();
+		for(Map.Entry<String, Long> player : allPlayers.entrySet()) {
+			String name = player.getKey();
+			if (checkUserPass(name, steamID).containsKey("PlayerID0")) {
+				int power = iface.getPower(pass, player.getValue());
+				ArrayList<String> finalPlayers = new ArrayList<String>();
+				finalPlayers.add(name);
+				finalPlayers.add(Integer.toString(power));
+				String[] ready = new String[finalPlayers.size()];
+				ready = finalPlayers.toArray(ready);
+				toReturn.put(player.getValue(), ready);
+			}
+		}
+		return toReturn;
+	}
+
+	private static Map<String, ?> checkUserPass(String name, String steamID) throws Exception {
+		String playerPass = passwordEncrypt(name, steamID);
+		return iface.authenticateUser(pass, name, name+"@test.com", playerPass);
+	}
+
+	public static String encrypt(String plaintext) throws Exception
+	{
+		MessageDigest md = null;
+		try
+		{
+			md = MessageDigest.getInstance("SHA");
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			throw new WurmServerException("No such algorithm 'SHA'", e);
+		}
+		try
+		{
+			md.update(plaintext.getBytes("UTF-8"));
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			throw new WurmServerException("No such encoding: UTF-8", e);
+		}
+		byte[] raw = md.digest();
+		String hash = Base64.getEncoder().encodeToString(raw);
+		return hash;
+	}
+
+	public static String hashPassword(String password, String salt) throws NoSuchAlgorithmException, InvalidKeySpecException
+	{
+		char[] passwordChars = password.toCharArray();
+		byte[] saltBytes = salt.getBytes();
+
+		PBEKeySpec spec = new PBEKeySpec(passwordChars, saltBytes, 1000, 192);
+
+		SecretKeyFactory key = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+		byte[] hashedPassword = key.generateSecret(spec).getEncoded();
+		return String.format("%x", new Object[] { new BigInteger(hashedPassword) });
+	}
+
+	private static String passwordEncrypt(String name, String steamID64) throws Exception {
+		String enc = encrypt(name);
+		return hashPassword(steamID64, enc);
+	}
+
 	private static Map<Long, String[]> getOnlinePlayers() throws RemoteException, NotBoundException, WurmServerException {
 		Map<String, Long> allPlayers = getAllPlayers();
 		Map<Long, String[]> toReturn = new HashMap<Long, String[]>();
@@ -209,7 +304,7 @@ public final class WebRMI {
 		string.append("]");
 		return string.toString();
 	}
-	
+
 	private static String arrayToString(String[] v, String delimiter) {
 		StringBuilder string = new StringBuilder();
 		string.append("[");
@@ -307,7 +402,7 @@ public final class WebRMI {
 		}
 	}
 
-	private static void HandleRequest(Socket s) {
+	private static void HandleRequest(Socket s) throws UnsupportedEncodingException {
 		BufferedReader in;
 		PrintWriter out;
 		String request;
@@ -330,7 +425,7 @@ public final class WebRMI {
 				if (!request.contains("reloadsettings"))
 					iface = setupConnection(addr, rmiport); 
 				response = processCommand(request, commands);
-			} catch (RemoteException | NotBoundException | UnsupportedEncodingException | WurmServerException e) {
+			} catch (Exception e) {
 				response = "[ERROR] " + e.toString();
 			}
 			out = new PrintWriter(s.getOutputStream(), true);
