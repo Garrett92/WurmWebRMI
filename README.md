@@ -42,7 +42,11 @@ getAllServerInternalAddresses
 getPlayerCount
 	Returns the amount of players currently online
 getOnlinePlayers
-	Returns list of all connected players in the format ID=[NAME,X-COORD,Y-COORD]
+	Returns list of connected players in the format ID=[NAME,X-COORD,Y-COORD,(SEC)TIME-ONLINE]
+getRecentPlayers?[timeInSeconds]
+	Returns list of players that have been online within the specified time in the format
+	ID=[NAME,(SECONDS)LAST-ONLINE,(BOOL)CURRENTLY-ONLINE].
+	Note: If they are online, it will be (SECONDS)TIME-ONLINE
 getAllPlayers
 	Returns list of all characters registered on the server in the format NAME=PLAYERID
 getPlayerStates?[playerID]&[playerID]&...
@@ -65,6 +69,8 @@ getKingdoms
 	Returns list of kingdoms/IDs on the server
 getKingdomInfluence
 	Returns information about kingdom influence
+setWeather?[windRotation]&[windPower]&[windDir]
+	Unknown command - all vars requested are floats
 	
 getTileSummary?[TileX]&[TileY]&[Boolean surfaceTile]
 	Returns information about the tile (surfaceTile argument must be 'true' or 'false')
@@ -72,6 +78,19 @@ getStructureSummary?[structureID]
 	Returns information about the structure
 getItemSummary?[itemID]
 	Returns information about the item
+
+getBannedIP
+	Returns list of banned IP addresses
+removeBannedIP?[IP]
+	Removes specified banned IP address
+addBannedIP?[IP]&[Reason]&[Days]
+	Bans specified IP with reason and time length in days
+getBannedPlayers
+	Returns list of banned players
+pardonBan?[playerName]
+	Removes specified banned player from the banned list
+banPlayer?[playerName]&[reason]&[days]
+	Bans specified player with reason and time length in days
 
 getDeeds
 	Returns a list of active deeds on the server along with their villageID
