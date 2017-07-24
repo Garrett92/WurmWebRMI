@@ -42,7 +42,11 @@ getAllServerInternalAddresses
 getPlayerCount
 	Returns the amount of players currently online
 getOnlinePlayers
-	Returns list of all connected players in the format ID=[NAME,X-COORD,Y-COORD]
+	Returns list of connected players in the format ID=[NAME,X-COORD,Y-COORD,(SEC)TIME-ONLINE]
+getRecentPlayers?[timeInSeconds]
+	Returns list of players that have been online within the specified time in the format
+	ID=[NAME,(SECONDS)LAST-ONLINE,(BOOL)CURRENTLY-ONLINE].
+	Note: If they are online, it will be (SECONDS)TIME-ONLINE
 getAllPlayers
 	Returns list of all characters registered on the server in the format NAME=PLAYERID
 getPlayerStates?[playerID]&[playerID]&...
