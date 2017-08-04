@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -33,7 +35,6 @@ import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
 
 import com.wurmonline.server.webinterface.WebInterface;
-import com.wurmonline.shared.exceptions.WurmServerException;
 
 public final class WebRMI {
 
@@ -57,11 +58,9 @@ public final class WebRMI {
 		while (true)
 		{
 			final Socket connection = socket.accept();
-			Runnable task = new Runnable()
-			{
+			Runnable task = new Runnable() {
 				@Override
-				public void run()
-				{
+				public void run() {
 					try {
 						HandleRequest(connection);
 					} catch (UnsupportedEncodingException e) {
@@ -72,9 +71,33 @@ public final class WebRMI {
 			fThreadPool.execute(task);
 		}
 	}
-
+	
 	private static String processCommand(String cmd, String[] args) throws Exception {
 		switch (cmd.toLowerCase()) {
+		case "getallsteamids":
+			correctUsage = "USAGE=getAllSteamIDs";
+			return buildOutput(iface.CPgetSteamDBInfo(pass));
+		case "isplayeronline":
+			correctUsage = "USAGE=isPlayerOnline?[wurmID]";
+			return Boolean.toString(iface.CPisPlayerOnline(pass, Long.parseLong(args[0])));
+		case "getallstructures":
+			correctUsage = "USAGE=getAllStructures";
+			return buildOutput(iface.CPgetAllStructures(pass));
+		case "kickplayer":
+			correctUsage = "USAGE=kickPlayer?[wurmID]&[message]";
+			return iface.CPkickPlayer(pass, Long.parseLong(args[0]), java.net.URLDecoder.decode(args[1], "UTF-8"));
+		case "getitemtemplates":
+			correctUsage = "USAGE=getItemTemplates";
+			return getItemTemplates();
+		case "changepower":
+			correctUsage = "USAGE=changePower?[wurmID]&[powerLevel]";
+			return iface.CPchangePower(pass, Long.parseLong(args[0]), Byte.parseByte(args[1]));
+		case "giveitem":
+			correctUsage = "USAGE=giveItem?[wurmID]&[itemID]&[itemQuality]&[itemRarity]&[creator]&[itemAmount]";
+			return iface.CPgiveItem(pass, Long.parseLong(args[0]), Integer.parseInt(args[1]), Float.parseFloat(args[2]), Byte.parseByte(args[3]), java.net.URLDecoder.decode(args[4], "UTF-8"), Integer.parseInt(args[5]));
+		case "messageplayer":
+			correctUsage = "USAGE=messagePlayer?[wurmID]&[messageType]&[message]";
+			return iface.CPmessagePlayer(pass, Long.parseLong(args[0]), Byte.parseByte(args[1]), java.net.URLDecoder.decode(args[2], "UTF-8"));
 		case "removebannedip":
 			correctUsage = "USAGE=removeBannedIP?[IP]";
 			return iface.removeBannedIp(pass, args[0]);
@@ -262,11 +285,26 @@ public final class WebRMI {
 			return "ERROR=Unknown command: " + cmd;
 		}
 	}
+
+	private static String getItemTemplates() {
+		StringBuffer sb = new StringBuffer();
+		ClassLoader classLoader = WebRMI.class.getClassLoader();
+		try {
+			Class<?> cls = classLoader.loadClass("com.wurmonline.server.items.ItemList");
+			Field[] fields = cls.getFields();
+			for(Field field : fields) {
+	            String name = field.getName();
+	            Object value = field.getInt(field);
+	            sb.append(value.toString() + "=" + name + newLine);
+	        }
+		} catch (Exception e) { }
+		return sb.toString();
+	}
 	
 	private static Long wurmDateToUnix(Date date) throws ParseException {
 		return (date.getTime()/1000);
 	}
-	
+
 	private static Long calcTimeDifference(Long time) throws ParseException {
 		Long now = new Date().getTime()/1000;  
 		return (now - time);
@@ -296,8 +334,8 @@ public final class WebRMI {
 		}
 		return toReturn;
 	}
-	
-	private static Map<Long, String[]> getOnlinePlayers() throws RemoteException, NotBoundException, WurmServerException, ParseException {
+
+	private static Map<Long, String[]> getOnlinePlayers() throws Exception {
 		Map<String, Long> allPlayers = getAllPlayers();
 		Map<Long, String[]> toReturn = new HashMap<Long, String[]>();
 		List<Long> playerIDs = new ArrayList<Long>();
@@ -324,7 +362,7 @@ public final class WebRMI {
 		}
 		return toReturn;
 	}
-	
+
 	private static String changePassword(String playerName, String steamID) throws RemoteException {
 		return buildOutput(iface.changePassword(pass, raiseFirstLetter(playerName), raiseFirstLetter(playerName)+"@test.com", steamID));
 	}
@@ -339,7 +377,7 @@ public final class WebRMI {
 		String newString = firstLetter + lOldString.substring(1, lOldString.length());
 		return newString;
 	}
-	
+
 	private static String changeEmail(String name, String oldEmail, String newEmail) throws RemoteException {
 		return buildOutput(iface.changeEmail(pass, name, oldEmail, newEmail));
 	}
@@ -350,7 +388,7 @@ public final class WebRMI {
 	}
 
 	private static String createPlayer(String playerName, String steamID, byte kingdomID, byte gender, byte power) throws RemoteException {
-			return buildOutput(iface.createPlayer(pass, raiseFirstLetter(playerName), steamID, "What is your mother's maiden name?", "Sawyer", raiseFirstLetter(playerName)+"@test.com", kingdomID, power, 8263186381637L, gender));
+		return buildOutput(iface.createPlayer(pass, raiseFirstLetter(playerName), steamID, "What is your mother's maiden name?", "Sawyer", raiseFirstLetter(playerName)+"@test.com", kingdomID, power, 8263186381637L, gender));
 	}
 
 	private static String getHighestPowerForSteamID(String steamID) throws Exception {
@@ -383,29 +421,19 @@ public final class WebRMI {
 	}
 
 	private static Map<String, ?> checkUserPass(String name, String steamID) throws Exception {
-		String playerPass = passwordEncrypt(name, steamID);
-		return iface.authenticateUser(pass, name, name+"@test.com", playerPass);
+		String playerPass = passwordEncrypt(raiseFirstLetter(name), steamID);
+		return iface.authenticateUser(pass, raiseFirstLetter(name), raiseFirstLetter(name)+"@test.com", playerPass);
 	}
 
 	private static String encrypt(String plaintext) throws Exception
 	{
 		MessageDigest md = null;
-		try
-		{
+		try {
 			md = MessageDigest.getInstance("SHA");
-		}
-		catch (NoSuchAlgorithmException e)
-		{
-			throw new WurmServerException("No such algorithm 'SHA'", e);
-		}
-		try
-		{
+		} catch (Exception e) { }
+		try {
 			md.update(plaintext.getBytes("UTF-8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			throw new WurmServerException("No such encoding: UTF-8", e);
-		}
+		} catch (Exception e) { }
 		byte[] raw = md.digest();
 		String hash = Base64.getEncoder().encodeToString(raw);
 		return hash;
@@ -424,7 +452,7 @@ public final class WebRMI {
 	}
 
 	private static String passwordEncrypt(String name, String steamID64) throws Exception {
-		String enc = encrypt(name);
+		String enc = encrypt(raiseFirstLetter(name));
 		return hashPassword(steamID64, enc);
 	}
 

@@ -7,6 +7,12 @@ Web based HTML interface for Wurm Unlimited RMI commands.
 * Windows: Run startWurmWebRMI.bat
 * Linux: Run 'java -jar WurmWebRMI.jar' from the installation directory
 
+## WurmWebRMI.ini
+* Web Port = This is the port the webserver will be hosted on
+* Server IP = Your Wurm Unlimited server IP
+* RMI Port = Your Wurm Unlimited RMI port
+* RMI Password = Your Wurm Unlimited RMI password
+
 ## Usage
 This isn't really meant to be a stand-alone tool, just an interface for web based control so it can be accessed from other scripts or a web server. The webpage output string will need to be parsed by a separate tool or script in order to make the data useful.
 
@@ -16,7 +22,32 @@ Try to load the webpage by going to [http://127.0.0.1:8080](http://127.0.0.1:808
 * 127.0.0.1:8080/getAllPlayers
 * 127.0.0.1:8080/addMoneyToBank?Admin&1234567890&10000 
 
-**Commands:**
+**Commands (MODDED RMI):**
+
+If you would like to use the modded RMI commands, you will need the CustomRMI mod running on the server.
+
+[Wurm Custom RMI Mod](https://github.com/Garrett92/WurmRMImod/releases/latest)
+
+```
+getItemTemplates
+	Returns a list of all item template ID's and names (used for giveItem command)
+isPlayerOnline?[wurmID]
+	Returns true or false if the player is online or not
+giveItem?[wurmID]&[itemTemplateID]&[itemQuality]&[itemRarity]&[creator]&[itemAmount]
+	Gives the specified player items (must be online)
+messagePlayer?[wurmID]&[messageType]&[message]
+	Sends a message to the player through the event log (must be online)
+changePower?[wurmID]&[powerLevel]
+	Sets the players admin power level (must be online)
+kickPlayer?[wurmID]&[message]
+	Kicks the player and gives them a reason
+getAllStructures
+	Returns a list of all structures(houses/bridges) in the format STRUCTUREID=NAME
+getAllSteamIDs
+	Returns a list of SteamID's stored in the DB in the format PLAYERID=[NAME,STEAMID64]
+```
+
+**Commands (DEFAULT RMI):**
 
 ```
 broadcast?[message]
@@ -118,7 +149,7 @@ getBodyItems?[playerID]
 getBankAccount?[playerID]
 	Returns list of players bank contents
 getSkillsForPlayer?[playerID]
-	Returns list of players skills in the format (SKILL NAME=SKILL LEVEL)
+	Returns list of players skills in the format SKILL NAME=SKILL LEVEL
 getMoney?[playerID]&[playerName]
 	Returns players banked money in iron. (20000 would be 2 silver)
 addMoneyToBank?[playerName]&[playerID]&[amount in iron]
@@ -127,7 +158,7 @@ chargeMoney?[playerName]&[amount in iron]
 	Removed money from players bank and returns total updated amount in iron
 	
 findPlayersWithSteamID?[steamID64]
-	Matches any players with the supplied steamID returns (PLAYERID=[PLAYERNAME,POWER])
+	Matches any players with the supplied steamID returns PLAYERID=[PLAYERNAME,POWER]
 findSteamIDPower?[steamID64]
 	Returns the integer value of the highest power player from the findPlayersWithSteamID list
 genPassword?[playerName]&[steamID64]
