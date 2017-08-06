@@ -244,7 +244,7 @@ public interface WebInterface extends Remote
 	 * @param wurmID
 	 * @param powerLevel
 	 */
-	String CPchangePower(String intraServerPassword, long wurmID, byte powerLevel) throws java.rmi.RemoteException;
+	String CPchangePower(String intraServerPassword, long wurmID, byte powerLevel) throws RemoteException;
 	
 	/**
 	 * Custom Method -- Requires customRMImod
@@ -257,7 +257,7 @@ public interface WebInterface extends Remote
 	 * @param creator
 	 * @param itemAmount
 	 */
-	String CPgiveItem(String intraServerPassword, long wurmID, int itemTemplateID, float itemQuality, byte itemRarity, String creator, int itemAmount) throws java.rmi.RemoteException;
+	String CPgiveItem(String intraServerPassword, long wurmID, int itemTemplateID, float itemQuality, byte itemRarity, String creator, int itemAmount) throws RemoteException;
 	
 	/**
 	 * Custom Method -- Requires customRMImod
@@ -266,14 +266,15 @@ public interface WebInterface extends Remote
 	 * @param wurmID
 	 * @param message
 	 */
-	String CPkickPlayer(String intraServerPassword, long wurmID, String message) throws java.rmi.RemoteException;
+	String CPkickPlayer(String intraServerPassword, long wurmID, String message) throws RemoteException;
 	
 	/**
 	 * Custom Method -- Requires customRMImod
 	 * 
 	 * @param intraServerPassword
 	 */
-	Map CPgetAllStructures(String intraServerPassword) throws java.rmi.RemoteException;
+	@SuppressWarnings("rawtypes")
+	Map CPgetAllStructures(String intraServerPassword) throws RemoteException;
 	
 	/**
 	 * Custom Method -- Requires customRMImod
@@ -281,13 +282,21 @@ public interface WebInterface extends Remote
 	 * @param intraServerPassword
 	 * @param wurmID
 	 */
-	boolean CPisPlayerOnline(String intraServerPassword, long wurmID) throws java.rmi.RemoteException;
+	boolean CPisPlayerOnline(String intraServerPassword, long wurmID) throws RemoteException;
 	
 	/**
+	 * Custom Method -- Requires customRMImod
 	 * 
 	 * @param intraServerPassword
-	 * @return
-	 * @throws java.rmi.RemoteException
 	 */
-	Map CPgetSteamDBInfo(String intraServerPassword) throws java.rmi.RemoteException;
+	@SuppressWarnings("rawtypes")
+	Map CPgetSteamDBInfo(String intraServerPassword) throws RemoteException;
+	
+	/**
+	 * Custom Method -- Requires customRMImod
+	 * 
+	 * @param intraServerPassword
+	 */
+	@SuppressWarnings("rawtypes")
+	Map CPgetAllGuardTowers(String intraServerPassword) throws RemoteException;
 }

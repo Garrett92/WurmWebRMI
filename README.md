@@ -43,6 +43,8 @@ kickPlayer?[wurmID]&[message]
 	Kicks the player and gives them a reason
 getAllStructures
 	Returns a list of all structures(houses/bridges) in the format STRUCTUREID=NAME
+getAllGuardTowers
+	Returns a list of all guard towers format: STRUCTUREID=[X,Y,CREATORID,CREATORNAME,QL,DMG]
 getAllSteamIDs
 	Returns a list of SteamID's stored in the DB in the format PLAYERID=[NAME,STEAMID64]
 ```
@@ -153,9 +155,9 @@ getSkillsForPlayer?[playerID]
 getMoney?[playerID]&[playerName]
 	Returns players banked money in iron. (20000 would be 2 silver)
 addMoneyToBank?[playerName]&[playerID]&[amount in iron]
-	Adds money to players bank and returns total updated amount in iron
+	Adds money to players bank
 chargeMoney?[playerName]&[amount in iron]
-	Removed money from players bank and returns total updated amount in iron
+	Removes money from players bank
 	
 findPlayersWithSteamID?[steamID64]
 	Matches any players with the supplied steamID returns PLAYERID=[PLAYERNAME,POWER]

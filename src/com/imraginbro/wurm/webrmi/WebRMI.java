@@ -74,6 +74,9 @@ public final class WebRMI {
 	
 	private static String processCommand(String cmd, String[] args) throws Exception {
 		switch (cmd.toLowerCase()) {
+		case "getallguardtowers":
+			correctUsage = "USAGE=getAllGuardTowers";
+			return buildOutput(iface.CPgetAllGuardTowers(pass));
 		case "getallsteamids":
 			correctUsage = "USAGE=getAllSteamIDs";
 			return buildOutput(iface.CPgetSteamDBInfo(pass));
