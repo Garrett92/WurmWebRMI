@@ -1,8 +1,9 @@
 package com.imraginbro.wurm.webrmi;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -10,6 +11,9 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -25,14 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-
-import org.ini4j.Ini;
-import org.ini4j.Profile.Section;
 
 import com.wurmonline.server.webinterface.WebInterface;
 
@@ -44,6 +46,7 @@ public final class WebRMI {
 	static int rmiport = 7220;
 	static String pass = "";
 	static String correctUsage = "";
+	static boolean debug = false;
 	static final String newLine = System.lineSeparator();
 
 	private static final int fNumberOfThreads = 100;
@@ -51,7 +54,9 @@ public final class WebRMI {
 
 	public static void main(String[] args) throws IOException
 	{
-		loadSettings();
+		if (!loadPropValues()) {
+			return;
+		}
 		System.out.println("Starting webserver on port " + webport);
 		@SuppressWarnings("resource")
 		ServerSocket socket = new ServerSocket(webport);
@@ -282,7 +287,7 @@ public final class WebRMI {
 			return "RETURN=OK";
 		case "reloadsettings":
 			correctUsage = "USAGE=reloadSettings";
-			loadSettings();
+			loadPropValues();
 			return "RETURN=OK";
 		default:
 			return "ERROR=Unknown command: " + cmd;
@@ -529,38 +534,66 @@ public final class WebRMI {
 		Registry registry = LocateRegistry.getRegistry(host, port);
 		return (WebInterface) registry.lookup("wuinterface");
 	}
-
-	private static void loadSettings() {
-		File settings = new File("WurmWebRMI.ini");
-		if (!settings.exists()) {
+	
+	public static void copy(InputStream source , String destination) {
+        try {
+            Files.copy(source, Paths.get(destination), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+        	ex.printStackTrace();
+        }
+    }
+	
+	private static void copyPropertiesFile() {
+		try {
+			InputStream in = WebRMI.class.getResourceAsStream("/resources/WurmWebRMI.properties");
+			copy(in, "WurmWebRMI.properties");
+			in.close();
+		} catch(Exception e) {
+			System.out.println("Error copying properties file from jar - " + e.getMessage());
+		}
+	}
+	
+	private static boolean loadPropValues() {
+		System.out.println("Loading WurmWebRMI.properties file!");
+		Properties prop = new Properties();
+		InputStream input = null;
+		try {
+			input = new FileInputStream("WurmWebRMI.properties");
+		} catch (Exception e) {
+			System.out.println("[ERROR] problem loading properties FileInputStream - " + e.getMessage());
+			System.out.println("Copying properties file from jar... please configure and restart program.");
+			copyPropertiesFile();
+			return false;
+		}
+		if (input != null) {
 			try {
-				settings.createNewFile();
-			} catch (IOException e) {
-				System.out.println("Settings file not found and java cannot create one...");
-				System.out.println("Error creating settings file: " + e.getMessage());
+				prop.load(input);
+			} catch (Exception e) {
+				System.out.println("Error loading properties file - " + e.getMessage());
+				return false;
 			}
 		}
-		try {
-			Ini ini = new Ini(settings);
-			if (!ini.containsKey("Main"))
-				ini.add("Main");
-			Section section = ini.get("Main");
-			if (!section.containsKey("Server IP"))
-				ini.put("Main", "Server IP", "127.0.0.1");
-			if (!section.containsKey("Web Port"))
-				ini.put("Main", "Web Port", "8080");
-			if (!section.containsKey("RMI Port"))
-				ini.put("Main", "RMI Port", "7220");
-			if (!section.containsKey("RMI Password"))
-				ini.put("Main", "RMI Password", "changeme");
-			ini.store();
-			addr = ini.get("Main", "Server IP");
-			webport = Integer.parseInt(ini.get("Main", "Web Port"));
-			rmiport = Integer.parseInt(ini.get("Main", "RMI Port"));
-			pass = ini.get("Main", "RMI Password");
-		} catch (IOException e) {
-			System.out.println("Error loading settings file: " + e.getMessage());
+		
+		webport = Integer.parseInt(prop.getProperty("HttpWebPort", Integer.toString(webport)));
+		addr = prop.getProperty("WurmServerIP", addr);
+		rmiport = Integer.parseInt(prop.getProperty("WurmRMIPort", Integer.toString(rmiport)));
+		pass = prop.getProperty("WurmRMIPassword", pass);
+		debug = Boolean.parseBoolean(prop.getProperty("DebugMode", Boolean.toString(debug)));
+		
+		System.out.println("[INFO] Web Port: " + webport);
+		System.out.println("[INFO] Debug: " + debug);
+		System.out.println("[INFO] Wurm IP: " + addr);
+		System.out.println("[INFO] Wurm RMI Port: " + rmiport);
+		System.out.println("[INFO] Wurm RMI Pass: " + pass);
+
+		if (input != null) {
+			try {
+				input.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
+		return true;
 	}
 
 	private static void HandleRequest(Socket s) throws UnsupportedEncodingException {
@@ -573,6 +606,9 @@ public final class WebRMI {
 
 			request = in.readLine();
 			request = request.substring(request.indexOf("/")+1, request.indexOf("HTTP")-1);
+			if (debug) {
+				System.out.println("[DEBUG-REQUEST] ("+s.getInetAddress().getHostAddress()+") " + request);
+			}
 			String[] commands = request.split("\\?");
 			if (commands.length > 1) {
 				request = commands[0];
@@ -596,6 +632,7 @@ public final class WebRMI {
 			out.flush();
 			out.close();
 			s.close();
+			in.close();
 		}
 		catch (IOException e) {
 			System.out.println("Failed respond to client request: " + e.getMessage());

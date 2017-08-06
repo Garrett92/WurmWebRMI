@@ -1,9 +1,8 @@
 package com.wurmonline.server.webinterface;
 
-import java.rmi.*;
-import java.util.*;
-import com.wurmonline.server.players.*;
-import com.wurmonline.shared.exceptions.*;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.util.Map;
 
 public interface WebInterface extends Remote
 {
