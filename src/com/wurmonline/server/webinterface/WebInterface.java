@@ -225,77 +225,20 @@ public interface WebInterface extends Remote
     boolean isFeatureEnabled(final String p0, final int p1) throws RemoteException;
     
     boolean setPlayerFlag(final String p0, final long p1, final int p2, final boolean p3) throws RemoteException;
+    
+    public java.util.Map CustomgetAllGuardTowers(java.lang.String pass) throws java.rmi.RemoteException;
 
-    /**
-     * Custom Method -- Requires customRMImod
-     * 
-     * @param intraServerPassword - RMI password
-     * @param wurmID - Wurm Player ID
-     * @param type - Message Type (0 = event log only, 1 = event log + on screen)
-     * @param message - Message text
-     */
-	String CPmessagePlayer(String intraServerPassword, long wurmID, byte color, String message) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 * @param wurmID
-	 * @param powerLevel
-	 */
-	String CPchangePower(String intraServerPassword, long wurmID, byte powerLevel) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 * @param wurmID
-	 * @param itemTemplateID
-	 * @param itemQuality
-	 * @param itemRarity - item rarity (0=normal, 1=rare, 2=supreme, 3=fantastic)
-	 * @param creator
-	 * @param itemAmount
-	 */
-	String CPgiveItem(String intraServerPassword, long wurmID, int itemTemplateID, float itemQuality, byte itemRarity, String creator, int itemAmount) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 * @param wurmID
-	 * @param message
-	 */
-	String CPkickPlayer(String intraServerPassword, long wurmID, String message) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 */
-	@SuppressWarnings("rawtypes")
-	Map CPgetAllStructures(String intraServerPassword) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 * @param wurmID
-	 */
-	boolean CPisPlayerOnline(String intraServerPassword, long wurmID) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 */
-	@SuppressWarnings("rawtypes")
-	Map CPgetSteamDBInfo(String intraServerPassword) throws RemoteException;
-	
-	/**
-	 * Custom Method -- Requires customRMImod
-	 * 
-	 * @param intraServerPassword
-	 */
-	@SuppressWarnings("rawtypes")
-	Map CPgetAllGuardTowers(String intraServerPassword) throws RemoteException;
+    //auto-generated with codePrinter.java
+    public java.util.Map CPgetSteamDBInfo(java.lang.String var_0) throws java.rmi.RemoteException;
+    public java.lang.String CPchangePower(java.lang.String var_0, long var_1, byte var_2) throws java.rmi.RemoteException;
+    public java.lang.String CPgiveItem(java.lang.String var_0, long var_1, int var_2, float var_3, byte var_4, java.lang.String var_5, int var_6) throws java.rmi.RemoteException;
+    public java.lang.String CPkickPlayer(java.lang.String var_0, long var_1, java.lang.String var_2) throws java.rmi.RemoteException;
+    public java.util.Map CPgetAllStructures(java.lang.String var_0) throws java.rmi.RemoteException;
+    public boolean CPisPlayerOnline(java.lang.String var_0, long var_1) throws java.rmi.RemoteException;
+    public java.lang.String CPmessagePlayer(java.lang.String var_0, long var_1, byte var_2, java.lang.String var_3) throws java.rmi.RemoteException;
+    public java.lang.String CPmessagePlayerCustom(java.lang.String var_0, long var_1, java.lang.String var_2, java.lang.String var_3, java.lang.String var_4, int var_5, int var_6, int var_7) throws java.rmi.RemoteException;
+    public java.lang.String CPmessagePlayerWarnPM(java.lang.String var_0, long var_1, java.lang.String var_2, java.lang.String var_3) throws java.rmi.RemoteException;
+    public java.lang.String CPmessagePlayerPM(java.lang.String var_0, long var_1, java.lang.String var_2, java.lang.String var_3, java.lang.String var_4) throws java.rmi.RemoteException;
+    public java.lang.String CPplayerSendPopup(java.lang.String var_0, long var_1, java.lang.String var_2, java.lang.String var_3) throws java.rmi.RemoteException;
+
 }

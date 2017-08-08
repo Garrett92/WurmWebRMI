@@ -29,6 +29,17 @@ If you would like to use the modded RMI commands, you will need the CustomRMI mo
 [Wurm Custom RMI Mod](https://github.com/Garrett92/WurmRMImod/releases/latest)
 
 ```
+messagePlayerCustom?[wurmID]&[customWindowTitle]&[senderName]&[message]&[red]&[green]&[blue]
+	Sends the player a message - this command gives full control over the message
+	Red, Green, and Blue will be the color of the text and should be a value of 0-255 for each.
+	customWindowTitle will be the target tab. (You can set ':Event' for event log, or ':Local' or make your own)
+	sender name will show up in the message as '<senderName> message'
+messagePlayerPopup?[wurmID]&[windowTitle]&[message]
+	Sends the player a popup window
+messagePlayerPM?[wurmID]&[senderName]&[windowTitle]&[message]
+	Sends the player a message through 'PM: windowTitle' <senderName> message
+messagePlayerSystemPM?[wurmID]&[windowTitle]&[message]
+	Sends the player a message through 'PM: windowTitle' <System> message
 getItemTemplates
 	Returns a list of all item template ID's and names (used for giveItem command)
 isPlayerOnline?[wurmID]

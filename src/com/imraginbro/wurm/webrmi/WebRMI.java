@@ -116,9 +116,21 @@ public final class WebRMI {
 	
 	private static String processCommand(String cmd, String[] args) throws Exception {
 		switch (cmd.toLowerCase()) {
+		case "messageplayerpopup":
+			correctUsage = "USAGE=messagePlayerPopup?[wurmID]&[windowTitle]&[message]";
+			return iface.CPplayerSendPopup(pass, Long.parseLong(args[0]), java.net.URLDecoder.decode(args[1], "UTF-8"), java.net.URLDecoder.decode(args[2], "UTF-8"));
+		case "messageplayerpm":
+			correctUsage = "USAGE=messagePlayerPM?[wurmID]&[senderName]&[windowTitle]&[message]";
+			return iface.CPmessagePlayerPM(pass, Long.parseLong(args[0]), java.net.URLDecoder.decode(args[1], "UTF-8"), java.net.URLDecoder.decode(args[2], "UTF-8"), java.net.URLDecoder.decode(args[3], "UTF-8"));
+		case "messageplayersystempm":
+			correctUsage = "USAGE=messagePlayerSystemPM?[wurmID]&[windowTitle]&[message]";
+			return iface.CPmessagePlayerWarnPM(pass, Long.parseLong(args[0]), java.net.URLDecoder.decode(args[1], "UTF-8"), java.net.URLDecoder.decode(args[2], "UTF-8"));
+		case "messageplayercustom":
+			correctUsage = "USAGE=messagePlayerCustom?[wurmID]&[customWindowTitle]&[senderName]&[message]&[0-255red]&[0-255green]&[0-255blue]";
+			return iface.CPmessagePlayerCustom(pass, Long.parseLong(args[0]), java.net.URLDecoder.decode(args[1], "UTF-8"), java.net.URLDecoder.decode(args[2], "UTF-8"), java.net.URLDecoder.decode(args[3], "UTF-8"), Integer.parseInt(args[4]), Integer.parseInt(args[5]), Integer.parseInt(args[6]));
 		case "getallguardtowers":
 			correctUsage = "USAGE=getAllGuardTowers";
-			return buildOutput(iface.CPgetAllGuardTowers(pass));
+			return buildOutput(iface.CustomgetAllGuardTowers(pass));
 		case "getallsteamids":
 			correctUsage = "USAGE=getAllSteamIDs";
 			return buildOutput(iface.CPgetSteamDBInfo(pass));
