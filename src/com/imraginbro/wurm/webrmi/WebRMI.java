@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -39,27 +40,42 @@ import javax.crypto.spec.PBEKeySpec;
 import com.wurmonline.server.webinterface.WebInterface;
 
 public final class WebRMI {
-
+	
+	static final String newLine = System.lineSeparator();
 	static WebInterface iface;
+	
+	static String correctUsage = "";
+	
+	static boolean debug = false;
+	
+	static String bindSocket = "";
 	static String addr = "127.0.0.1";
 	static int webport = 8080;
 	static int rmiport = 7220;
 	static String pass = "";
-	static String correctUsage = "";
-	static boolean debug = false;
-	static final String newLine = System.lineSeparator();
+	static String limitConnection = "*";
+	static boolean allowAll = true;
+	static String[] allowedIP;
 
 	private static final int fNumberOfThreads = 100;
 	private static final Executor fThreadPool = Executors.newFixedThreadPool(fNumberOfThreads);
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException
 	{
 		if (!loadPropValues()) {
 			return;
 		}
-		System.out.println("Starting webserver on port " + webport);
-		@SuppressWarnings("resource")
-		ServerSocket socket = new ServerSocket(webport);
+		
+		System.getSecurityManager();
+		ServerSocket socket;
+		if (bindSocket.equals("")) {
+			socket = new ServerSocket(webport);
+		} else {
+			socket = new ServerSocket(webport, 0, InetAddress.getByName(bindSocket));
+		}
+		
+		System.out.println("Starting server... listening from " + socket.getLocalSocketAddress());
 		while (true)
 		{
 			final Socket connection = socket.accept();
@@ -67,9 +83,30 @@ public final class WebRMI {
 				@Override
 				public void run() {
 					try {
+						connection.setSoTimeout(2000);
+						final String ip = connection.getInetAddress().getHostAddress();
+						if (debug) {
+							System.out.println("[DEBUG-CONNECTION] connection attempt from " + ip);
+						}
+						if (!allowAll) {
+							boolean success = false;
+							for (int i = 0; i < allowedIP.length; i++) {
+								if (ip.contains(allowedIP[i])) {
+									success = true;
+									break;
+								}
+							}
+							if (!success) {
+								System.out.println("[SECURITY] Blocked connection attempt from " + ip);
+								connection.close();
+								return;
+							}
+						}
 						HandleRequest(connection);
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						if (debug) {
+							System.out.println("[DEBUG-ERROR] " + e.getMessage());
+						}
 					}
 				}
 			};
@@ -579,12 +616,32 @@ public final class WebRMI {
 		rmiport = Integer.parseInt(prop.getProperty("WurmRMIPort", Integer.toString(rmiport)));
 		pass = prop.getProperty("WurmRMIPassword", pass);
 		debug = Boolean.parseBoolean(prop.getProperty("DebugMode", Boolean.toString(debug)));
+		bindSocket = prop.getProperty("bindSocket", bindSocket);
+		limitConnection = prop.getProperty("limitConnection", limitConnection);
 		
 		System.out.println("[INFO] Web Port: " + webport);
 		System.out.println("[INFO] Debug: " + debug);
 		System.out.println("[INFO] Wurm IP: " + addr);
 		System.out.println("[INFO] Wurm RMI Port: " + rmiport);
 		System.out.println("[INFO] Wurm RMI Pass: " + pass);
+		
+		if (bindSocket.equals("")) {
+			System.out.println("[INFO] Binding socket to all local IP's");
+		} else {
+			System.out.println("[INFO] Binding socket to: " + bindSocket);
+		}
+		
+		if (!limitConnection.equals("*")) {
+			allowAll = false;
+			allowedIP = limitConnection.split(",");
+			for (int i = 0; i < allowedIP.length; i++) {
+				allowedIP[i] = allowedIP[i].trim();
+				System.out.println("[INFO] ("+(i+1)+") Allowing connections from " + allowedIP[i]);
+				allowedIP[i] = allowedIP[i].replace("*", "");
+			}
+		} else {
+			System.out.println("[INFO] Allowing all connections");
+		}
 
 		if (input != null) {
 			try {
@@ -634,8 +691,10 @@ public final class WebRMI {
 			s.close();
 			in.close();
 		}
-		catch (IOException e) {
-			System.out.println("Failed respond to client request: " + e.getMessage());
+		catch (Exception e) {
+			if (debug) {
+				System.out.println("[DEBUG-REQUEST] Connection error: " + e.getMessage());
+			}
 		}
 		finally {
 			if (s != null) {
